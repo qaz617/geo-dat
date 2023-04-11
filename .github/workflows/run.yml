@@ -59,6 +59,10 @@ jobs:
         run: |
           wget https://github.com/qaz617/geoip/raw/release/geoip.dat
           wget https://github.com/qaz617/geoip/raw/release/geoip.dat.sha256sum
+          wget https://github.com/qaz617/geoip/raw/release/Country.mmdb
+          wget https://github.com/qaz617/geoip/raw/release/Country.mmdb.sha256sum
+          wget https://github.com/qaz617/geoip/raw/release/geoip-only-cn-private.dat
+          wget https://github.com/qaz617/geoip/raw/release/geoip-only-cn-private.dat.sha256sum
 
       - name: Generate GFWList domains
         run: |
@@ -217,6 +221,10 @@ jobs:
           mkdir -p ./publish/
           install -Dp ./geoip.dat ./publish/
           install -Dp ./geoip.dat.sha256sum ./publish/
+          install -Dp ./Country.mmdb ./publish/
+          install -Dp ./Country.mmdb.sha256sum ./publish/
+          install -Dp ./geoip-only-cn-private.dat ./publish/
+          install -Dp ./geoip-only-cn-private.dat.sha256sum ./publish/
           install -Dp ./custom/publish/geosite.dat ./publish/
           install -Dp ./sing-geosite/geosite.db ./publish/
           install -Dp ./sing-geosite/geosite-v2fly.db ./publish/
@@ -227,12 +235,30 @@ jobs:
           install -p {apple-cn,google-cn,gfw,win-spy,win-update,win-extra}.txt ./publish/
           cp -fpPR ./community/data ./publish
           cd ./publish || exit 1
-          zip rules.zip {proxy,direct,reject}-list.txt geoip.dat geosite.dat geosite.db geosite-v2fly.db geoip.db
+          zip rules.zip {proxy,direct,reject}-list.txt geoip.dat geosite.dat geosite.db geosite-v2fly.db geoip.db Country.mmdb geoip-only-cn-private.dat
+          zip -r data.zip data
           sha256sum geosite.dat > geosite.dat.sha256sum
           sha256sum geosite.db > geosite.db.sha256sum
           sha256sum geoip.db > geoip.db.sha256sum
           sha256sum rules.zip > rules.zip.sha256sum
+          sha256sum data.zip > data.zip.sha256sum
 
+      - name: Create directories and move files
+        run: |
+          cd publish || exit 1
+          mkdir -p data/category-1
+          mkdir -p data/category-2       
+          i=1
+          for file in $(ls -1 data/* | head -1000); do
+            mv "$file" "data/category-1"
+            i=$((i+1))
+          done
+          for file in data/*; do
+            if [ ! -d "$file" ]; then
+              mv "$file" "data/category-2"
+            fi
+          done
+      
       - name: Git push assets to "release" branch
         run: |
           cd publish || exit 1
