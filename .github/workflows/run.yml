@@ -59,8 +59,12 @@ jobs:
         run: |
           wget https://github.com/qaz617/geoip/raw/release/geoip.dat
           wget https://github.com/qaz617/geoip/raw/release/geoip.dat.sha256sum
+          wget https://github.com/qaz617/geoip/raw/release/geoip-lite.dat
+          wget https://github.com/qaz617/geoip/raw/release/geoip-lite.dat.sha256sum
           wget https://github.com/qaz617/geoip/raw/release/Country.mmdb
           wget https://github.com/qaz617/geoip/raw/release/Country.mmdb.sha256sum
+          wget https://github.com/qaz617/geoip/raw/release/Country-lite.mmdb
+          wget https://github.com/qaz617/geoip/raw/release/Country-lite.mmdb.sha256sum
           wget https://github.com/qaz617/geoip/raw/release/geoip-only-cn-private.dat
           wget https://github.com/qaz617/geoip/raw/release/geoip-only-cn-private.dat.sha256sum
 
@@ -223,6 +227,10 @@ jobs:
           install -Dp ./geoip.dat.sha256sum ./publish/
           install -Dp ./Country.mmdb ./publish/
           install -Dp ./Country.mmdb.sha256sum ./publish/
+          install -Dp ./geoip-lite.dat ./publish/
+          install -Dp ./geoip-lite.dat.sha256sum ./publish/
+          install -Dp ./Country-lite.mmdb ./publish/
+          install -Dp ./Country-lite.mmdb.sha256sum ./publish/
           install -Dp ./geoip-only-cn-private.dat ./publish/
           install -Dp ./geoip-only-cn-private.dat.sha256sum ./publish/
           install -Dp ./custom/publish/geosite.dat ./publish/
