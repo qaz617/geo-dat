@@ -281,7 +281,7 @@ jobs:
           install -p {proxy,direct,reject}-list.txt ./publish/
           install -p hosts ./publish/
           install -p {apple-cn,google-cn,gfw,win-spy,win-update,win-extra}.txt ./publish/
-          cp -fpPR ./data-lite ./publish
+          cp -fpPR ./community/data-lite ./publish
           cp -fpPR ./community/data ./publish
           cd ./publish || exit 1
           zip rules.zip {proxy,direct,reject}-list.txt geoip.dat geosite.dat geosite.db geosite-v2fly.db geoip.db geoip-cn.db geoip-lite.db Country.mmdb geoip-only-cn-private.dat
