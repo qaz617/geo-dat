@@ -328,11 +328,18 @@ jobs:
           rm -rf  ./publish/data
           rm -rf  ./publish/data-lite
         
+      - name: Delete current release assets
+        uses: andreaswilli/delete-release-assets-action@v2.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: latest
+          deleteOnlyFromDrafts: false
+
       - name: Release and upload assets
         uses: softprops/action-gh-release@v0.1.6
         with:
-          name: ${{ env.RELEASE_NAME }}
-          tag_name: ${{ env.TAG_NAME }}
+          name: latest
+          tag_name: latest
           draft: false
           prerelease: false
           files: |
