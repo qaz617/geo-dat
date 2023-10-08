@@ -11,7 +11,7 @@ jobs:
         run: |
           echo "RELEASE_NAME=Released on $(date +%Y%m%d%H%M)" >> $GITHUB_ENV
           echo "TAG_NAME=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
-          echo "CHINA_DOMAINS_URL=https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/ChinaMax/ChinaMax_Domain.txt" >> $GITHUB_ENV
+          echo "CHINA_DOMAINS_URL=https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf" >> $GITHUB_ENV
           echo "GOOGLE_DOMAINS_URL=https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/google.china.conf" >> $GITHUB_ENV
           echo "APPLE_DOMAINS_URL=https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/apple.china.conf" >> $GITHUB_ENV
           #echo "GREATFIRE_DOMAINS_URL=https://raw.githubusercontent.com/Loyalsoldier/cn-blocked-domain/release/domains.txt" >> $GITHUB_ENV
@@ -28,24 +28,24 @@ jobs:
         shell: bash
 
       - name: Checkout the "hidden" branch of this repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: hidden
 
       - name: Checkout Loyalsoldier/domain-list-custom
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: Loyalsoldier/domain-list-custom
           path: custom
 
       - name: Checkout v2fly/domain-list-community
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: v2fly/domain-list-community
           path: community
 
       - name: Checkout cokebar/gfwlist2dnsmasq
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: cokebar/gfwlist2dnsmasq
           path: gfwlist2dnsmasq
@@ -54,6 +54,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version-file: ./custom/go.mod
+          cache-dependency-path: ./custom/go.sum
           
       - name: Get geoip.dat relative files
         run: |
@@ -76,7 +77,7 @@ jobs:
 
       - name: Get and add direct domains into temp-direct.txt file
         run: |
-          curl -sSL ${CHINA_DOMAINS_URL} | sed '/^\s*#/d' | sed '/^[^\.]/ s/^/full: /' |  sed 's/^\.\([^.]*\)/\1/' > temp-direct.txt
+          curl -sSL $CHINA_DOMAINS_URL | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' > temp-direct.txt
           curl -sSL ${CUSTOM_DIRECT} | perl -ne '/^(domain):([^:]+)(\n$|:@.+)/ && print "$2\n"' >> temp-direct.txt
 
       - name: Get and add proxy domains into temp-proxy.txt file
@@ -209,7 +210,7 @@ jobs:
           curl -sSL https://github.com/blackmatrix7/ios_rule_script/raw/master/rule/Clash/Bahamut/Bahamut.yaml | ${{ env.SED }} > ./data-lite/bahamut
           curl -sSL https://v.firebog.net/hosts/AdguardDNS.txt | grep -v "#" | sed '/^\s*$/d' > ./data-lite/category-ads-all
           curl -sSL https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/AdGuard/BlockHttpDNS/BlockHttpDNS.txt | perl -ne '/^\|\|([-_0-9a-zA-Z]+(\.[-_0-9a-zA-Z]+){1,64})\^$/ && print "$1\n"' | perl -ne 'print if not /^[0-9]{1,3}(\.[0-9]{1,3}){3}$/' > ./data-lite/httpdns
-          curl https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/China/China_Domain.yaml | grep - | sed "s/  - '+.//g" | sed "s/  - '/full:/g" | grep -v "#" | sed "s/'//g" > ./data-lite/cn
+          curl -sSL https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' > ./data-lite/cn
           curl -sSL https://github.com/blackmatrix7/ios_rule_script/raw/master/rule/Clash/Google/Google.yaml | ${{ env.SED }} > ./data-lite/google
           curl -sSL https://github.com/blackmatrix7/ios_rule_script/raw/master/rule/Clash/GitHub/GitHub.yaml | ${{ env.SED }} > ./data-lite/github
           curl -sSL https://github.com/blackmatrix7/ios_rule_script/raw/master/rule/Clash/Microsoft/Microsoft.yaml | ${{ env.SED }} > ./data-lite/microsoft
@@ -230,7 +231,7 @@ jobs:
           go run ./ --datapath=./data-lite --outputname geosite-lite.dat
       
       - name: Checkout CHIZI-0618/sing-geosite
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: CHIZI-0618/sing-geosite
           path: sing-geosite
@@ -245,7 +246,7 @@ jobs:
           cp ../community/geosite-lite.dat ./
           go run -v . geosite-lite.dat geosite-lite.db
       - name: Checkout qaz617/sing-geoip
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: qaz617/sing-geoip
           path: sing-geoip
@@ -338,13 +339,9 @@ jobs:
           deleteOnlyFromDrafts: false
 
       - name: Release and upload assets
-        uses: softprops/action-gh-release@v0.1.6
-        with:
-          name: latest
-          tag_name: latest
-          draft: false
-          prerelease: false
-          files: |
-            ./publish/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: svenstaro/upload-release-action@v2
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          release_name: ${{ env.RELEASE_NAME }}
+          tag: ${{ env.TAG_NAME }}
+          file_glob: true
+          file: ./publish/*
