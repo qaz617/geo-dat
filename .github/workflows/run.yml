@@ -225,9 +225,14 @@ jobs:
           curl -sSL https://github.com/blackmatrix7/ios_rule_script/raw/master/rule/Clash/Twitter/Twitter.yaml | ${{ env.SED }} > ./data-lite/twitter
           curl -sSL https://github.com/blackmatrix7/ios_rule_script/raw/master/rule/Clash/TikTok/TikTok.yaml | ${{ env.SED }} > ./data-lite/tiktok
           curl -sSL https://github.com/blackmatrix7/ios_rule_script/raw/master/rule/Clash/YouTube/YouTube.yaml | ${{ env.SED }} > ./data-lite/youtube
+          curl -sSL https://github.com/blackmatrix7/ios_rule_script/raw/master/rule/Clash/Amazon/Amazon.yaml | ${{ env.SED }} > ./data-lite/amazon
+          curl -sSL https://github.com/blackmatrix7/ios_rule_script/raw/master/rule/Clash/HBO/HBO.yaml | ${{ env.SED }} > ./data-lite/hbo
+          curl -sSL https://github.com/blackmatrix7/ios_rule_script/raw/master/rule/Clash/Disney/Disney.yaml | ${{ env.SED }} > ./data-lite/disney
+          curl -sSL https://github.com/blackmatrix7/ios_rule_script/raw/master/rule/Clash/PrimeVideo/PrimeVideo.yaml | ${{ env.SED }} > ./data-lite/primevideo
           
           echo include:google >> ./data-lite/proxy && echo include:github >> ./data-lite/proxy && echo include:netflix >> ./data-lite/proxy
           echo ipleak.net >> ./data-lite/proxy && echo browserleaks.org >> ./data-lite/proxy
+          echo zk468.com >>./data-lite/cn
           go run ./ --datapath=./data-lite --outputname geosite-lite.dat
       
       - name: Checkout CHIZI-0618/sing-geosite
