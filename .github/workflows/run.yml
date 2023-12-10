@@ -1,13 +1,8 @@
-name: Build V2Ray rules dat files
+name: Build
 on:
   workflow_dispatch:
   schedule:
     - cron: "0 22 * * *"
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - "**/README.md"
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,10 +14,12 @@ jobs:
           echo "CHINA_DOMAINS_URL=https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf" >> $GITHUB_ENV
           echo "GOOGLE_DOMAINS_URL=https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/google.china.conf" >> $GITHUB_ENV
           echo "APPLE_DOMAINS_URL=https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/apple.china.conf" >> $GITHUB_ENV
-          echo "EASYLISTCHINA_EASYLIST_REJECT_URL=https://easylist-downloads.adblockplus.org/easylistchina+easylist.txt" >> $GITHUB_ENV
-          echo "PETERLOWE_REJECT_URL=https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=1&mimetype=plaintext" >> $GITHUB_ENV
-          echo "ADGUARD_DNS_REJECT_URL=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
-          echo "DANPOLLOCK_REJECT_URL=https://someonewhocares.org/hosts/hosts" >> $GITHUB_ENV
+          #echo "GREATFIRE_DOMAINS_URL=https://raw.githubusercontent.com/Loyalsoldier/cn-blocked-domain/release/domains.txt" >> $GITHUB_ENV
+          #echo "GFWATCH_DOMAINS_URL=https://raw.githubusercontent.com/qaz617/v2ray-rules-dat/hidden/blocked-domains.txt" >> $GITHUB_ENV
+          echo "EASYLIST_URL=https://raw.githubusercontent.com/neodevpro/neodevhost/master/domain" >> $GITHUB_ENV
+          echo "ADGUARD_DNS_URL=https://v.firebog.net/hosts/AdguardDNS.txt" >> $GITHUB_ENV
+          #echo "ABP_FULL_URL=https://raw.githubusercontent.com/rentianyu/Ad-set-hosts/master/hosts" >> $GITHUB_ENV
+          #echo "AD_SDK_URL=https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Adblock-Rule/main/AWAvenue-Adblock-Rule.txt" >> $GITHUB_ENV
           echo "CUSTOM_DIRECT=https://raw.githubusercontent.com/Loyalsoldier/domain-list-custom/release/cn.txt" >> $GITHUB_ENV
           echo "CUSTOM_PROXY=https://raw.githubusercontent.com/Loyalsoldier/domain-list-custom/release/geolocation-!cn.txt" >> $GITHUB_ENV
           echo "WIN_SPY=https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt" >> $GITHUB_ENV
@@ -58,11 +55,15 @@ jobs:
         with:
           go-version-file: ./custom/go.mod
           cache-dependency-path: ./custom/go.sum
-
+          
       - name: Get geoip.dat relative files
         run: |
-          wget https://github.com/Loyalsoldier/geoip/raw/release/geoip.dat
-          wget https://github.com/Loyalsoldier/geoip/raw/release/geoip.dat.sha256sum
+          wget https://github.com/qaz617/geoip/raw/release/geoip.dat
+          wget https://github.com/qaz617/geoip/raw/release/geoip.dat.sha256sum
+          wget https://github.com/qaz617/geoip/raw/release/Country.mmdb
+          wget https://github.com/qaz617/geoip/raw/release/Country.mmdb.sha256sum
+          wget https://github.com/qaz617/geoip/raw/release/geoip-only-cn-private.dat
+          wget https://github.com/qaz617/geoip/raw/release/geoip-only-cn-private.dat.sha256sum
 
       - name: Generate GFWList domains
         run: |
@@ -78,17 +79,18 @@ jobs:
       - name: Get and add proxy domains into temp-proxy.txt file
         run: |
           cat ./gfwlist2dnsmasq/temp-gfwlist.txt | perl -ne '/^((?=^.{3,255})[a-zA-Z0-9][-_a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-_a-zA-Z0-9]{0,62})+)/ && print "$1\n"' > temp-proxy.txt
+          #curl -sSL $GREATFIRE_DOMAINS_URL | perl -ne '/^((?=^.{3,255})[a-zA-Z0-9][-_a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-_a-zA-Z0-9]{0,62})+)/ && print "$1\n"' >> temp-proxy.txt
+          #curl -sSL $GFWATCH_DOMAINS_URL | perl -ne '/^((?=^.{3,255})[a-zA-Z0-9][-_a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-_a-zA-Z0-9]{0,62})+)/ && print "$1\n"' >> temp-proxy.txt
           curl -sSL $GOOGLE_DOMAINS_URL | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' >> temp-proxy.txt
           curl -sSL $APPLE_DOMAINS_URL | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' >> temp-proxy.txt
           curl -sSL ${CUSTOM_PROXY} | grep -Ev ":@cn" | perl -ne '/^(domain):([^:]+)(\n$|:@.+)/ && print "$2\n"' >> temp-proxy.txt
 
       - name: Get and add reject domains into temp-reject.txt file
         run: |
-          curl -sSL $EASYLISTCHINA_EASYLIST_REJECT_URL | perl -ne '/^\|\|([-_0-9a-zA-Z]+(\.[-_0-9a-zA-Z]+){1,64})\^$/ && print "$1\n"' | perl -ne 'print if not /^[0-9]{1,3}(\.[0-9]{1,3}){3}$/' > temp-reject.txt
-          curl -sSL $ADGUARD_DNS_REJECT_URL | perl -ne '/^\|\|([-_0-9a-zA-Z]+(\.[-_0-9a-zA-Z]+){1,64})\^$/ && print "$1\n"' | perl -ne 'print if not /^[0-9]{1,3}(\.[0-9]{1,3}){3}$/' >> temp-reject.txt
-          curl -sSL $PETERLOWE_REJECT_URL | perl -ne '/^127\.0\.0\.1\s([-_0-9a-zA-Z]+(\.[-_0-9a-zA-Z]+){1,64})$/ && print "$1\n"' >> temp-reject.txt
-          curl -sSL $DANPOLLOCK_REJECT_URL | perl -ne '/^127\.0\.0\.1\s([-_0-9a-zA-Z]+(\.[-_0-9a-zA-Z]+){1,64})/ && print "$1\n"' | sed '1d' >> temp-reject.txt
-
+          curl -sSL $EASYLIST_URL  >> temp-reject.txt
+          curl -sSL $ADGUARD_DNS_URL  >> temp-reject.txt
+          #curl -sSL $ABP_FULL_URL | perl -ne '/^127\.0\.0\.1\s([-_0-9a-zA-Z]+(\.[-_0-9a-zA-Z]+){1,64})$/ && print "$1\n"' >> temp-reject.txt
+          #curl -sSL $AD_SDK_URL | perl -ne '/^\|\|([-_0-9a-zA-Z]+(\.[-_0-9a-zA-Z]+){1,64})\^$/ && print "$1\n"' | perl -ne 'print if not /^[0-9]{1,3}(\.[0-9]{1,3}){3}$/' >> temp-reject.txt
       - name: Reserve `full`, `regexp` and `keyword` type of rules from custom lists to "reserve" files
         run: |
           curl -sSL ${CUSTOM_DIRECT} | perl -ne '/^((full|regexp|keyword):[^:]+)(\n$|:@.+)/ && print "$1\n"' | sort --ignore-case -u > direct-reserve.txt
@@ -145,52 +147,109 @@ jobs:
           cp ./community/data/cn direct-list.txt
           cp ./community/data/geolocation-\!cn proxy-list.txt
           cp ./community/data/category-ads-all reject-list.txt
+          awk '{print "0.0.0.0 " $0}' reject-list.txt > hosts
 
-      - name: Create `china-list`、`google-cn`、`apple-cn`、`gfw`、`greatfire` lists
+      - name: Create `google-cn`、`apple-cn`、`gfw`、`greatfire` lists
         run: |
-          curl -sSL $CHINA_DOMAINS_URL | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' > ./community/data/china-list
-          curl -sSL $CHINA_DOMAINS_URL | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' > china-list.txt
           curl -sSL $GOOGLE_DOMAINS_URL | perl -ne '/^server=\/([^\/]+)\// && print "full:$1\n"' > ./community/data/google-cn
+          sed -i '/www.gstatic.com/d' ./community/data/google-cn
           curl -sSL $GOOGLE_DOMAINS_URL | perl -ne '/^server=\/([^\/]+)\// && print "full:$1\n"' > google-cn.txt
+          sed -i '/www.gstatic.com/d' google-cn.txt
           curl -sSL $APPLE_DOMAINS_URL | perl -ne '/^server=\/([^\/]+)\// && print "full:$1\n"' > ./community/data/apple-cn
           curl -sSL $APPLE_DOMAINS_URL | perl -ne '/^server=\/([^\/]+)\// && print "full:$1\n"' > apple-cn.txt
           cat ./gfwlist2dnsmasq/temp-gfwlist.txt | perl -ne '/^((?=^.{3,255})[a-zA-Z0-9][-_a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-_a-zA-Z0-9]{0,62})+)/ && print "$1\n"' >> ./community/data/gfw
           cat ./community/data/gfw | sort --ignore-case -u > gfw.txt
-          cat ./community/data/greatfire | sort --ignore-case -u > greatfire.txt
+          #curl -sSL $GREATFIRE_DOMAINS_URL | perl -ne '/^((?=^.{3,255})[a-zA-Z0-9][-_a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-_a-zA-Z0-9]{0,62})+)/ && print "$1\n"' >> ./community/data/greatfire
+          #curl -sSL $GFWATCH_DOMAINS_URL | perl -ne '/^((?=^.{3,255})[a-zA-Z0-9][-_a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-_a-zA-Z0-9]{0,62})+)/ && print "$1\n"' >> ./community/data/greatfire
+          #cat ./community/data/greatfire | sort --ignore-case -u > greatfire.txt
           curl -sSL $WIN_SPY | grep "0.0.0.0" | awk '{print $2}' > ./community/data/win-spy
           curl -sSL $WIN_SPY | grep "0.0.0.0" | awk '{print $2}' > win-spy.txt
           curl -sSL $WIN_UPDATE | grep "0.0.0.0" | awk '{print $2}' > ./community/data/win-update
           curl -sSL $WIN_UPDATE | grep "0.0.0.0" | awk '{print $2}' > win-update.txt
           curl -sSL $WIN_EXTRA | grep "0.0.0.0" | awk '{print $2}' > ./community/data/win-extra
           curl -sSL $WIN_EXTRA | grep "0.0.0.0" | awk '{print $2}' > win-extra.txt
-
+      
       - name: Build geosite.dat file
         run: |
           cd custom || exit 1
           go run ./ --datapath=../community/data
+          
+      - name: Checkout CHIZI-0618/sing-geosite
+        uses: actions/checkout@v4
+        with:
+          repository: CHIZI-0618/sing-geosite
+          path: sing-geosite
 
+      - name: Build geosite.db and srs file
+        env:
+          NO_SKIP: true
+        run: |
+          cd sing-geosite || exit 1
+          cp ../custom/publish/geosite.dat ./
+          go run -v . geosite.dat geosite.db singbox_rule_set
+          
+      - name: Checkout SagerNet/sing-geoip
+        uses: actions/checkout@v4
+        with:
+          repository: SagerNet/sing-geoip
+          path: sing-geoip
+
+      - name: Build geoip.db and srs file
+        env:
+          NO_SKIP: true
+        run: |
+          cd sing-geoip || exit 1
+          sed -i 's/Dreamacro\/maxmind-geoip/qaz617\/geoip/g' main.go
+          go run -v .
+          sha256sum geoip.db > geoip.db.sha256sum
+          
       - name: Move and zip files and generate sha256 hash
         run: |
-          install -Dp ./geoip.dat ./publish/geoip.dat
-          install -Dp ./geoip.dat.sha256sum ./publish/geoip.dat.sha256sum
-          install -Dp ./custom/publish/geosite.dat ./publish/geosite.dat
+          mkdir -p ./publish/
+          mkdir -p publish/geosite_rule_set
+          mkdir -p publish/singbox_ip_rule_set
+          install -Dp ./geoip.dat ./publish/
+          install -Dp ./geoip.dat.sha256sum ./publish/
+          install -Dp ./Country.mmdb ./publish/
+          install -Dp ./Country.mmdb.sha256sum ./publish/
+          install -Dp ./geoip-only-cn-private.dat ./publish/
+          install -Dp ./geoip-only-cn-private.dat.sha256sum ./publish/
+          install -Dp ./custom/publish/geosite.dat ./publish/
+          install -Dp ./sing-geosite/singbox_rule_set/* ./publish/geosite_rule_set/
+          install -Dp ./sing-geosite/geosite.db ./publish/
+          install -Dp ./sing-geosite/geosite-v2fly.db ./publish/
+          install -Dp ./sing-geoip/geoip.db ./publish/
+          install -Dp ./sing-geoip/rule-set/* ./publish/singbox_ip_rule_set/
           install -p {proxy,direct,reject}-tld-list.txt ./publish/
           install -p {proxy,direct,reject}-list.txt ./publish/
-          install -p {china-list,apple-cn,google-cn,gfw,greatfire,win-spy,win-update,win-extra}.txt ./publish/
+          install -p hosts ./publish/
+          install -p {apple-cn,google-cn,gfw,win-spy,win-update,win-extra}.txt ./publish/
+          cp -fpPR ./community/data ./publish
           cd ./publish || exit 1
-          zip rules.zip {proxy,direct,reject}-list.txt geoip.dat geosite.dat
+          zip rules.zip {proxy,direct,reject}-list.txt geoip.dat geosite.dat geosite.db geosite-v2fly.db geoip.db Country.mmdb geoip-only-cn-private.dat
+          zip -r data.zip data
           sha256sum geosite.dat > geosite.dat.sha256sum
+          sha256sum geosite.db > geosite.db.sha256sum
+          sha256sum geoip.db > geoip.db.sha256sum
           sha256sum rules.zip > rules.zip.sha256sum
+          sha256sum data.zip > data.zip.sha256sum
 
-      - name: Release and upload assets
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          release_name: ${{ env.RELEASE_NAME }}
-          tag: ${{ env.TAG_NAME }}
-          file_glob: true
-          file: ./publish/*
-
+      - name: Create directories and move files
+        run: |
+          cd publish || exit 1
+          mkdir -p data/category-1
+          mkdir -p data/category-2       
+          i=1
+          for file in $(ls -1 data/* | head -1000); do
+            mv "$file" "data/category-1"
+            i=$((i+1))
+          done
+          for file in data/*; do
+            if [ ! -d "$file" ]; then
+              mv "$file" "data/category-2"
+            fi
+          done
+      
       - name: Git push assets to "release" branch
         run: |
           cd publish || exit 1
@@ -202,10 +261,23 @@ jobs:
           git commit -m "${{ env.RELEASE_NAME }}"
           git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
           git push -f -u origin release
-
-      - name: Purge jsdelivr CDN
+          
+      - name: Remove some files to avoid publishing to GitHub release
         run: |
-          cd publish || exit 1
-          for file in $(ls); do
-            curl -i "https://purge.jsdelivr.net/gh/${{ github.repository }}@release/${file}"
-          done
+          rm -rf  ./publish/data
+        
+      - name: Delete current release assets
+        uses: andreaswilli/delete-release-assets-action@v2.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: latest
+          deleteOnlyFromDrafts: false
+
+      - name: Release and upload assets
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          release_name: ${{ env.RELEASE_NAME }}
+          tag: ${{ env.TAG_NAME }}
+          file_glob: true
+          file: ./publish/*
