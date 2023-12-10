@@ -190,7 +190,7 @@ jobs:
         run: |
           cd sing-geosite || exit 1
           cp ../custom/publish/geosite.dat ./
-          go run -v . geosite.dat geosite.db geosite_rule_set
+          go run -v . geosite.dat geosite.db singbox_rule_set
           
       - name: Checkout SagerNet/sing-geoip
         uses: actions/checkout@v4
@@ -223,7 +223,7 @@ jobs:
           install -Dp ./geoip-only-cn-private.dat ./publish/
           install -Dp ./geoip-only-cn-private.dat.sha256sum ./publish/
           install -Dp ./custom/publish/geosite.dat ./publish/
-          install -Dp ./sing-geosite/geosite_rule_set/* ./publish/geosite_rule_set/
+          install -Dp ./sing-geosite/singbox_rule_set/* ./publish/geosite_rule_set/
           install -Dp ./sing-geosite/geosite.db ./publish/
           install -Dp ./sing-geosite/geosite-v2fly.db ./publish/
           install -Dp ./sing-geoip/geoip.db ./publish/
