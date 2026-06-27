@@ -267,11 +267,12 @@ jobs:
           rm -rf  ./publish/data
 
       - name: Delete current release assets
-        uses: andreaswilli/delete-release-assets-action@v4.0.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: latest
-          deleteOnlyFromDrafts: false
+        run: |
+          if gh release view "${{ env.TAG_NAME }}" >/dev/null 2>&1; then
+            gh release delete "${{ env.TAG_NAME }}" -y --cleanup-tag || true
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release and upload assets
         uses: svenstaro/upload-release-action@v2
