@@ -28,34 +28,34 @@ jobs:
         shell: bash
 
       - name: Checkout the "hidden" branch of this repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: hidden
 
       - name: Checkout Loyalsoldier/domain-list-custom
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: Loyalsoldier/domain-list-custom
           path: custom
 
       - name: Checkout v2fly/domain-list-community
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: v2fly/domain-list-community
           path: community
 
       - name: Checkout cokebar/gfwlist2dnsmasq
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: cokebar/gfwlist2dnsmasq
           path: gfwlist2dnsmasq
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: ./custom/go.mod
           cache-dependency-path: ./custom/go.sum
-          
+
       - name: Get geoip.dat relative files
         run: |
           wget https://github.com/qaz617/geoip/raw/release/geoip.dat
@@ -168,14 +168,14 @@ jobs:
           curl -sSL $WIN_UPDATE | grep "0.0.0.0" | awk '{print $2}' > win-update.txt
           curl -sSL $WIN_EXTRA | grep "0.0.0.0" | awk '{print $2}' > ./community/data/win-extra
           curl -sSL $WIN_EXTRA | grep "0.0.0.0" | awk '{print $2}' > win-extra.txt
-      
+
       - name: Build geosite.dat file
         run: |
           cd custom || exit 1
           go run ./ --datapath=../community/data
-          
+
       - name: Checkout CHIZI-0618/sing-geosite
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: CHIZI-0618/sing-geosite
           path: sing-geosite
@@ -187,9 +187,9 @@ jobs:
           cd sing-geosite || exit 1
           cp ../custom/publish/geosite.dat ./
           go run -v . geosite.dat geosite.db singbox_rule_set
-          
+
       - name: Checkout SagerNet/sing-geoip
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: SagerNet/sing-geoip
           path: sing-geoip
@@ -202,7 +202,7 @@ jobs:
           sed -i 's/Dreamacro\/maxmind-geoip/qaz617\/geoip/g' main.go
           go run -v .
           sha256sum geoip.db > geoip.db.sha256sum
-          
+
       - name: Move and zip files and generate sha256 hash
         run: |
           mkdir -p ./publish/
@@ -238,7 +238,7 @@ jobs:
         run: |
           cd publish || exit 1
           mkdir -p data/category-1
-          mkdir -p data/category-2       
+          mkdir -p data/category-2
           i=1
           for file in $(ls -1 data/* | head -1000); do
             mv "$file" "data/category-1"
@@ -249,7 +249,7 @@ jobs:
               mv "$file" "data/category-2"
             fi
           done
-      
+
       - name: Git push assets to "release" branch
         run: |
           cd publish || exit 1
@@ -261,13 +261,13 @@ jobs:
           git commit -m "${{ env.RELEASE_NAME }}"
           git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
           git push -f -u origin release
-          
+
       - name: Remove some files to avoid publishing to GitHub release
         run: |
           rm -rf  ./publish/data
-        
+
       - name: Delete current release assets
-        uses: andreaswilli/delete-release-assets-action@v2.0.0
+        uses: andreaswilli/delete-release-assets-action@v4.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           tag: latest
