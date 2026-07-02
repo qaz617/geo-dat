@@ -201,7 +201,6 @@ jobs:
         run: |
           cd sing-geoip || exit 1
           sed -i 's/os.Stdout.WriteString("::set-output name=" + name + "::" + content + "\\n")/if f, _ := os.OpenFile(os.Getenv("GITHUB_OUTPUT"), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644); f != nil { defer f.Close(); f.WriteString(name + "=" + content + "\\n") }/g' main.go
-          sed -i 's/Dreamacro\/maxmind-geoip/qaz617\/geoip/g' main.go
           go run -v .
           sha256sum geoip.db > geoip.db.sha256sum
 
