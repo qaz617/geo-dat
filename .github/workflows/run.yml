@@ -267,6 +267,8 @@ jobs:
       - name: Remove some files to avoid publishing to GitHub release
         run: |
           rm -rf  ./publish/data
+          rm -rf  ./publish/geosite_rule_set
+          rm -rf  ./publish/singbox_ip_rule_set
 
       - name: Delete current release assets
         run: |
@@ -282,35 +284,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           release_name: ${{ env.RELEASE_NAME }}
           tag: ${{ env.TAG_NAME }}
-          file_glob: false
-          file: |
-            ./publish/geoip.dat
-            ./publish/geoip.dat.sha256sum
-            ./publish/Country.mmdb
-            ./publish/Country.mmdb.sha256sum
-            ./publish/geoip-only-cn-private.dat
-            ./publish/geoip-only-cn-private.dat.sha256sum
-            ./publish/geosite.dat
-            ./publish/geosite.dat.sha256sum
-            ./publish/geosite.db
-            ./publish/geosite.db.sha256sum
-            ./publish/geosite-v2fly.db
-            ./publish/geoip.db
-            ./publish/geoip.db.sha256sum
-            ./publish/rules.zip
-            ./publish/rules.zip.sha256sum
-            ./publish/data.zip
-            ./publish/data.zip.sha256sum
-            ./publish/proxy-list.txt
-            ./publish/direct-list.txt
-            ./publish/reject-list.txt
-            ./publish/proxy-tld-list.txt
-            ./publish/direct-tld-list.txt
-            ./publish/reject-tld-list.txt
-            ./publish/hosts
-            ./publish/apple-cn.txt
-            ./publish/google-cn.txt
-            ./publish/gfw.txt
-            ./publish/win-spy.txt
-            ./publish/win-update.txt
-            ./publish/win-extra.txt
+          file_glob: true
+          file: ./publish/*
